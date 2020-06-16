@@ -2,17 +2,17 @@
 
 ## Chapter 1: Fundamentals
 
-### Java 8, 9, 10 and 11: what's happpening?
+### Java 8, 9, 10 and 11: what's happening?
 
 #### Programming concepts that drove design of java 8
 * **Stream processing**:
   * A stream is a sequence of data items that are conceptually produced one at a time.
   * Stream can perform many operations on each item parallelly leveraging multiple processor cores.
-* **Passing code to methods with behaviour parameterization**:
+* **Passing code to methods with behavior parameterization**:
   * This concept is formally called *behavior parameterization*.
   * Streams API is built on the idea of passing code to parameterize the behavior of its operations.
 * **Parallelism and shared mutable data**:
-  * This concept states that the behaviour provided *must be safe to execute concurrently* on different pieces of input.
+  * This concept states that the behavior provided *must be safe to execute concurrently* on different pieces of input.
   * Function being passed as parameter must not access shared mutable data to do its job.
   * Although, this rule can be overridden using *synchronized* keyword, it will force code to execute sequentially.
 
@@ -42,7 +42,24 @@
 
 * The Java 8 solution is to break the last link: an interface can now contain method signatures for which an implementing class doesn’t provide an implementation.
 
+---
+---
+## Behavior parameterization
+---
+### Introduction
+* *Behavior parameterization* is a software development pattern that lets you handle frequent requirement changes. For instance, you could pass the block of code as an argument to another method that will execute it later.
+* In other words, it is the ability to tell a method to take multiple behaviors (or strategies) as parameters and use them internally to accomplish different behaviors. This is what is defined in Strategy Design Pattern where you use interface to represent the entity but underlying logic or strategy can be implemented by various classes.
+* *java.util.function* package defines various interfaces whose *strategy* we can implement and pass through the code.
+* Behavior parameterization can be achieved by various ways:
+  * **Passing classes** (containing the code to be passed)
+  * **Passing Anonymous** classes (implementing only the required method)
+  * **Passing Lambdas**
+
+---
+---
 ## Optional
+---
+### Introduction
 * Java 8 introduced the Optional<T> class that, if used consistently, can help you avoid null-pointer exceptions. It’s a container object that may or may not contain a value. Optional<T> includes methods to explicitly deal with the case where a value is absent, and as a result you can avoid null-pointer exceptions.
 * It uses the type system to allow you to indicate when a variable is anticipated to potentially have a missing value. Consistently using Optional values creates a clear distinction between a missing value that’s planned for and a value that’s absent only because of a bug in your algorithm or a problem in your data.
 * When a value is present, the Optional class wraps it. Conversely, the absence of a value is modeled with an empty optional returned by the method Optional.empty. This static factory method returns a special singleton instance of the Optional class.
@@ -157,14 +174,14 @@
 
 ### Practical Examples
   * **Wrapping a potentially null value in an optional**:
-  One can either use a traditional null check with an possible null value or can wrap it with Optional.ofNullable() like this:
+    One can either use a traditional null check with an possible null value or can wrap it with Optional.ofNullable() like this:
   ```
   Optional<Object> value = Optional.ofNullable(map.get("key"));
   ```
 
   * **Exceptions vs Optional**:
-  Throwing an exception is another common alternative in the Java API to returning a null when a value can’t be provided. A typical example is the conversion of String into an int provided by the Integer.parseInt(String) static method. In this case, if the String doesn’t contain a parseable integer, this method throws a NumberFormat-Exception. Once again, the net effect is that the code signals an invalid argument if a String doesn’t represent an integer, the only difference being that this time, you have to check it with a try/catch block instead of using an if condition to control whether a value isn’t null.
-  Example:
+    Throwing an exception is another common alternative in the Java API to returning a null when a value can’t be provided. A typical example is the conversion of String into an int provided by the Integer.parseInt(String) static method. In this case, if the String doesn’t contain a parseable integer, this method throws a NumberFormat-Exception. Once again, the net effect is that the code signals an invalid argument if a String doesn’t represent an integer, the only difference being that this time, you have to check it with a try/catch block instead of using an if condition to control whether a value isn’t null.
+    Example:
   ```
   public static Optional<Integer> stringToInt(String s) {
       try {
@@ -172,5 +189,76 @@
       } catch (NumberFormatException e) {
           return Optional.empty();
       }
+  }
+  ```
+---
+---
+## The Java Module System
+---
+### Introduction
+  * *Java Module System* was released in Java 9. This feature was developed within project *Jigsaw*, and its development took almost a decade.
+  * Since year 2000, java has been using module system named OSGi(Open Services Gateway initiative) which wasn't formally a part of Java platform. Framework examples : Apache Felix and Equinox (which Eclipse uses)
+
+### The driving force
+  * **Separation of concerns**:
+    * *Separation of concerns (SoC)* is a principle that promotes decomposing a computer program into distinct features. Separate modules are formed that contain cohesive groups of code that have little overlap.
+    * Java 9 modules give you finer-grained control of which classes can see which other classes and allow this control to be checked at compile time.
+  * **Information Hiding**:
+    * This principle encourages hiding implementation details. By hiding implementation details, you can reduce the chances that a local change will require cascading changes in other parts of your program.
+    * We control the visibility of methods, fields and classes using visibility modifiers: public, protected, package-level and private. However, their granularity isn’t fine enough in many cases, and you could be obliged to declare a method public even if you didn’t intend to make it accessible for end users.
+
+### Why Java Module System was designed?
+  * **Modularity limitations**:
+    * Before Java 9, there were three levels to group code : classes, packages and JARs.
+    * At class level we had access modifiers and encapsulation to control access but very little encapsulation at the package and JARs level.
+    * *Limited Visibility control*:
+      * If you want classes and interfaces from one package to be visible to another package, you have to declare them as public. As a consequence, these classes and interfaces are accessible to everyone else as well.
+      * Worse, this situation is bad from a security point of view because you potentially increase the attack surface as more code is exposed to the risk of tampering.
+    * *Classpath*:
+      * The class path has no notion of versioning for the same class. You cannot predict what will happen if different versions of the same library with same class is present in the classpath.
+      * The class path doesn’t support explicit dependencies; all the classes inside different JARs are merged into one bag of classes on the class path. In other words, the class path doesn’t let you declare explicitly that one JAR depends on a set of classes contained inside another JAR.
+  * **Monolithic JDK**:
+    * JDK has grown and increased considerably in size. Many technologies were added and later deprecated. It doesn't matter if you are using those technologies, they will come shipped along with JDK. This situation becomes more problematic in applications which are meant to run on mobile devices or cloud.
+  * **Comparision OSGi**:
+    * When running inside an OSGi framework, a single bundle can be remotely installed, started, stopped, updated, and uninstalled without a reboot.
+    * The possibility of hot-swapping different subparts of your application without the need to restart it probably is the main advantage of OSGi over Jigsaw.
+
+### Java modules: The Big Picture
+  * Java 9 provides a new unit of Java program structure: the *module*. A module is introduced with a new keyword module, followed by its name and its body. Such a module descriptor lives in a special file: *module-info.java*, which is compiled to *module-info.class*.
+  * The body of a module descriptor consists of clauses, of which the two most important are requires and exports. The former clause specifies what other modules your modules need to run, and exports specifies everything that your module wants to be visible for other modules to use.
+  * A module descriptor describes and encapsulates one or more packages (and typically lives in the same folder as these packages), but in simple use cases, it exports (makes visible) only one of these packages.
+  * It is helpful to think of the exports and requires parts of a module as being respectively like the lugs (or tabs) and holes of a *jigsaw puzzle* (which is perhaps where the working name Project Jigsaw originated).
+### Working with Modules
+  * See this example of how to place module-info.java while using Java Module System.
+    Example:
+  ```
+  |─ expenses.application
+    |─ module-info.java
+    |─ com
+      |─ example
+        |─ expenses
+          |─ application
+            |─ ExpensesApplication.java
+
+  |─ expenses.readers
+    |─ module-info.java
+    |─ com
+      |─ example
+        |─ expenses
+          |─ readers
+            |─ Reader.java
+          |─ file
+            |─ FileReader.java
+          |─ http
+            |─ HttpReader.java
+  ```
+  * Modules can be exported and imported in the following manner:
+  ```
+  module expenses.readers {
+    requires java.base;
+
+    exports com.example.expenses.readers;
+    exports com.example.expenses.readers.file;
+    exports com.example.expenses.readers.http;
   }
   ```
